@@ -18,7 +18,7 @@ public:
 	LIST_DATA_ACCESSOR(float, SliderStepSize);
 	LIST_DATA_ACCESSOR(ECommonNumericType, DisplayNumericType);
 	LIST_DATA_ACCESSOR(FCommonNumberFormattingOptions, NumberFormattingOptions);
-
+	
 	static FCommonNumberFormattingOptions NoDecimal();
 	static FCommonNumberFormattingOptions WithDecimal(int32 NumFracDigit);
 
@@ -26,6 +26,11 @@ public:
 	void SetCurrentValueFromSlider(float InValue);
 	
 private:
+	//~ Begin UListDataObject_Base Interface
+	virtual bool CanResetBackToDefaultValue() const override;
+	virtual bool TryResetBackToDefaultValue() override;
+	//~ End UListDataObject_Base Interface
+	
 	float StringToFloat(const FString& InString) const;
 	
 	TRange<float> DisplayValueRange = TRange<float>(0.f, 1.f);

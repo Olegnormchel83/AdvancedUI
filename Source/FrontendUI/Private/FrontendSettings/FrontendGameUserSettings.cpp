@@ -9,7 +9,8 @@
 #include "Sound/SoundMix.h"
 
 UFrontendGameUserSettings::UFrontendGameUserSettings()
-	: OverallVolume(1.f)
+	: OverallVolume(1.f),
+	  MusicVolume(1.f)
 {
 }
 
@@ -24,34 +25,34 @@ UFrontendGameUserSettings* UFrontendGameUserSettings::Get()
 }
 
 void UFrontendGameUserSettings::SetOverallVolume(float InVolume)
-{	
+{
 	UWorld* InAudioWorld = nullptr;
 	const UFrontendDeveloperSettings* FrontendDeveloperSettings = GetDefault<UFrontendDeveloperSettings>();
- 
+
 	if (GEngine)
 	{
 		InAudioWorld = GEngine->GetCurrentPlayWorld();
 	}
- 
+
 	if (!InAudioWorld || !FrontendDeveloperSettings)
 	{
 		return;
 	}
- 
+
 	USoundClass* MasterSoundClass = nullptr;
 	if (UObject* LoadedObject = FrontendDeveloperSettings->MasterSoundClass.TryLoad())
 	{
 		MasterSoundClass = CastChecked<USoundClass>(LoadedObject);
 	}
- 
+
 	USoundMix* DefaultSoundMix = nullptr;
 	if (UObject* LoadedObject = FrontendDeveloperSettings->DefaultSoundMix.TryLoad())
 	{
 		DefaultSoundMix = CastChecked<USoundMix>(LoadedObject);
 	}
- 
+
 	OverallVolume = InVolume;
- 
+
 	UGameplayStatics::SetSoundMixClassOverride(
 		InAudioWorld,
 		DefaultSoundMix,
@@ -60,6 +61,11 @@ void UFrontendGameUserSettings::SetOverallVolume(float InVolume)
 		1.f,
 		0.2f
 	);
- 
+
 	UGameplayStatics::PushSoundMixModifier(InAudioWorld, DefaultSoundMix);
+}
+
+void UFrontendGameUserSettings::SetMusicVolume(float InVolume)
+{
+	MusicVolume = InVolume;
 }
