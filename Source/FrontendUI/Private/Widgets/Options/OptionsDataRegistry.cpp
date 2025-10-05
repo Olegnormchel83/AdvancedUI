@@ -9,7 +9,6 @@
 #include "Widgets/Options/DataObjects/ListDataObject_String.h"
 #include "FrontendFunctionLibrary.h"
 #include "FrontendGameplayTags.h"
-#include "CompGeom/FitOrientedBox3.h"
 #include "Widgets/Options/DataObjects/ListDataObject_Scalar.h"
 
 #define MAKE_OPTIONS_DATA_CONTROL(SetterOrGetterFuncName) \
@@ -185,18 +184,23 @@ void UOptionsDataRegistry::InitAudioCollectionTab()
 			VolumeCategoryCollection->AddChildListData(MusicVolume);
 		}
 		
-		// Test Item
+		// SoundFX Volume
 		{
-			UListDataObject_String* TestItem = NewObject<UListDataObject_String>();
-			TestItem->SetDataID(FName("TestItem"));
-			TestItem->SetDataDisplayName(FText::FromString("Test Image Item"));
-			TestItem->SetSoftDescriptionImage(
-				UFrontendFunctionLibrary::GetOptionsSoftImageByTag(FrontendGameplayTags::Frontend_Image_TestImage)
-			);
-			TestItem->SetDescriptionRichText(FText::FromString("The image to display can be specified in the project settings. "
-														 "It can be anything the developer assigned in there."));
-		
-			VolumeCategoryCollection->AddChildListData(TestItem);
+			UListDataObject_Scalar* SoundFXVolume = NewObject<UListDataObject_Scalar>();
+			SoundFXVolume->SetDataID(FName("SoundFXVolume"));
+			SoundFXVolume->SetDataDisplayName(FText::FromString(TEXT("Sound Effects Volume")));
+			SoundFXVolume->SetDescriptionRichText(FText::FromString(TEXT("This is description for Sound Effects volume")));
+			SoundFXVolume->SetDisplayValueRange(TRange<float>(0.f, 1.f));
+			SoundFXVolume->SetOutputValueRange(TRange<float>(0.f, 2.f));
+			SoundFXVolume->SetSliderStepSize(0.01f);
+			SoundFXVolume->SetDefaultValueFromString(LexToString(1.f));
+			SoundFXVolume->SetDisplayNumericType(ECommonNumericType::Percentage);
+			SoundFXVolume->SetNumberFormattingOptions(UListDataObject_Scalar::NoDecimal()); //No Decimal: 50% //One Decimal: 50.5%
+			SoundFXVolume->SetDataDynamicGetter(MAKE_OPTIONS_DATA_CONTROL(GetSoundFXVolume));
+			SoundFXVolume->SetDataDynamicSetter(MAKE_OPTIONS_DATA_CONTROL(SetSoundFXVolume));
+			SoundFXVolume->SetShouldApplySettingsImmediately(true);
+
+			VolumeCategoryCollection->AddChildListData(SoundFXVolume);
 		}
 	}
 	
