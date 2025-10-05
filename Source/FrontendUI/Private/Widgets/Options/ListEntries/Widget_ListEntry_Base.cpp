@@ -3,7 +3,6 @@
 
 #include "Widgets/Options/ListEntries/Widget_ListEntry_Base.h"
 #include "CommonTextBlock.h"
-#include "DetailCategoryBuilder.h"
 #include "Components/ListView.h"
 #include "Widgets/Options/DataObjects/ListDataObject_Base.h"
 #include "CommonInputSubsystem.h"

@@ -3,14 +3,10 @@
 
 #include "Widgets/Options/ListEntries/Widget_ListEntry_String.h"
 
-#include "DetailCategoryBuilder.h"
 #include "Widgets/Components/FrontendCommonRotator.h"
 #include "Widgets/Options/DataObjects/ListDataObject_String.h"
 #include "Widgets/Components/FrontendCommonButtonBase.h"
 #include "CommonInputSubsystem.h"
-
-#include "FrontendDebugHelper.h"
-#include "IMediaCache.h"
 
 void UWidget_ListEntry_String::NativeOnInitialized()
 {
