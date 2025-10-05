@@ -9,6 +9,7 @@
 #include "Widgets/Options/DataObjects/ListDataObject_String.h"
 #include "FrontendFunctionLibrary.h"
 #include "FrontendGameplayTags.h"
+#include "NaniteSceneProxy.h"
 #include "Widgets/Options/DataObjects/ListDataObject_Scalar.h"
 
 #define MAKE_OPTIONS_DATA_CONTROL(SetterOrGetterFuncName) \
@@ -57,7 +58,7 @@ TArray<UListDataObject_Base*> UOptionsDataRegistry::GetListSourceItemsBySelected
 }
 
 void UOptionsDataRegistry::FindChildListDataRecursively(UListDataObject_Base* InParentData,
-	TArray<UListDataObject_Base*>& OutFoundChildListData) const
+                                                        TArray<UListDataObject_Base*>& OutFoundChildListData) const
 {
 	if (!InParentData || !InParentData->HasAnyChildListData())
 	{
@@ -123,9 +124,10 @@ void UOptionsDataRegistry::InitGameplayCollectionTab()
 		TestItem->SetSoftDescriptionImage(
 			UFrontendFunctionLibrary::GetOptionsSoftImageByTag(FrontendGameplayTags::Frontend_Image_TestImage)
 		);
-		TestItem->SetDescriptionRichText(FText::FromString("The image to display can be specified in the project settings. "
-													 "It can be anything the developer assigned in there."));
-		
+		TestItem->SetDescriptionRichText(FText::FromString(
+			"The image to display can be specified in the project settings. "
+			"It can be anything the developer assigned in there."));
+
 		GameplayTabCollection->AddChildListData(TestItem);
 	}
 
@@ -157,7 +159,8 @@ void UOptionsDataRegistry::InitAudioCollectionTab()
 			OverallVolume->SetSliderStepSize(0.01f);
 			OverallVolume->SetDefaultValueFromString(LexToString(1.f));
 			OverallVolume->SetDisplayNumericType(ECommonNumericType::Percentage);
-			OverallVolume->SetNumberFormattingOptions(UListDataObject_Scalar::NoDecimal()); //No Decimal: 50% //One Decimal: 50.5%
+			OverallVolume->SetNumberFormattingOptions(UListDataObject_Scalar::NoDecimal());
+			//No Decimal: 50% //One Decimal: 50.5%
 			OverallVolume->SetDataDynamicGetter(MAKE_OPTIONS_DATA_CONTROL(GetOverallVolume));
 			OverallVolume->SetDataDynamicSetter(MAKE_OPTIONS_DATA_CONTROL(SetOverallVolume));
 			OverallVolume->SetShouldApplySettingsImmediately(true);
@@ -176,26 +179,29 @@ void UOptionsDataRegistry::InitAudioCollectionTab()
 			MusicVolume->SetSliderStepSize(0.01f);
 			MusicVolume->SetDefaultValueFromString(LexToString(1.f));
 			MusicVolume->SetDisplayNumericType(ECommonNumericType::Percentage);
-			MusicVolume->SetNumberFormattingOptions(UListDataObject_Scalar::NoDecimal()); //No Decimal: 50% //One Decimal: 50.5%
+			MusicVolume->SetNumberFormattingOptions(UListDataObject_Scalar::NoDecimal());
+			//No Decimal: 50% //One Decimal: 50.5%
 			MusicVolume->SetDataDynamicGetter(MAKE_OPTIONS_DATA_CONTROL(GetMusicVolume));
 			MusicVolume->SetDataDynamicSetter(MAKE_OPTIONS_DATA_CONTROL(SetMusicVolume));
 			MusicVolume->SetShouldApplySettingsImmediately(true);
 
 			VolumeCategoryCollection->AddChildListData(MusicVolume);
 		}
-		
+
 		// SoundFX Volume
 		{
 			UListDataObject_Scalar* SoundFXVolume = NewObject<UListDataObject_Scalar>();
 			SoundFXVolume->SetDataID(FName("SoundFXVolume"));
 			SoundFXVolume->SetDataDisplayName(FText::FromString(TEXT("Sound Effects Volume")));
-			SoundFXVolume->SetDescriptionRichText(FText::FromString(TEXT("This is description for Sound Effects volume")));
+			SoundFXVolume->SetDescriptionRichText(
+				FText::FromString(TEXT("This is description for Sound Effects volume")));
 			SoundFXVolume->SetDisplayValueRange(TRange<float>(0.f, 1.f));
 			SoundFXVolume->SetOutputValueRange(TRange<float>(0.f, 2.f));
 			SoundFXVolume->SetSliderStepSize(0.01f);
 			SoundFXVolume->SetDefaultValueFromString(LexToString(1.f));
 			SoundFXVolume->SetDisplayNumericType(ECommonNumericType::Percentage);
-			SoundFXVolume->SetNumberFormattingOptions(UListDataObject_Scalar::NoDecimal()); //No Decimal: 50% //One Decimal: 50.5%
+			SoundFXVolume->SetNumberFormattingOptions(UListDataObject_Scalar::NoDecimal());
+			//No Decimal: 50% //One Decimal: 50.5%
 			SoundFXVolume->SetDataDynamicGetter(MAKE_OPTIONS_DATA_CONTROL(GetSoundFXVolume));
 			SoundFXVolume->SetDataDynamicSetter(MAKE_OPTIONS_DATA_CONTROL(SetSoundFXVolume));
 			SoundFXVolume->SetShouldApplySettingsImmediately(true);
@@ -203,7 +209,46 @@ void UOptionsDataRegistry::InitAudioCollectionTab()
 			VolumeCategoryCollection->AddChildListData(SoundFXVolume);
 		}
 	}
-	
+
+	// Sound Category
+	{
+		UListDataObject_Collection* SoundCategoryCollection = NewObject<UListDataObject_Collection>();
+		SoundCategoryCollection->SetDataID(FName("SoundCategoryCollection"));
+		SoundCategoryCollection->SetDataDisplayName(FText::FromString(TEXT("Sound")));
+
+		AudioTabCollection->AddChildListData(SoundCategoryCollection);
+
+		// Allow Background Audio
+		{
+			UListDataObject_StringBool* AllowBackgroundAudio = NewObject<UListDataObject_StringBool>();
+			AllowBackgroundAudio->SetDataID(FName("AllowBackgroundAudio"));
+			AllowBackgroundAudio->SetDataDisplayName(FText::FromString(TEXT("Allow Background Audio")));
+			AllowBackgroundAudio->OverrideTrueDisplayText(FText::FromString(TEXT("Enabled")));
+			AllowBackgroundAudio->OverrideFalseDisplayText(FText::FromString(TEXT("Disabled")));
+			AllowBackgroundAudio->SetFalseAsDefaultValue();
+			AllowBackgroundAudio->SetDataDynamicGetter(MAKE_OPTIONS_DATA_CONTROL(GetAllowBackgroundAudio));
+			AllowBackgroundAudio->SetDataDynamicSetter(MAKE_OPTIONS_DATA_CONTROL(SetAllowBackgroundAudio));
+			AllowBackgroundAudio->SetShouldApplySettingsImmediately(true);
+
+			SoundCategoryCollection->AddChildListData(AllowBackgroundAudio);
+		}
+
+		// Use HDR Audio
+		{
+			UListDataObject_StringBool* UseHDRAudioMode = NewObject<UListDataObject_StringBool>();
+			UseHDRAudioMode->SetDataID(FName("UseHDRAudio"));
+			UseHDRAudioMode->SetDataDisplayName(FText::FromString(TEXT("Use HDR Audio Mode")));
+			UseHDRAudioMode->OverrideTrueDisplayText(FText::FromString(TEXT("ON")));
+			UseHDRAudioMode->OverrideFalseDisplayText(FText::FromString(TEXT("OFF")));
+			UseHDRAudioMode->SetFalseAsDefaultValue();
+			UseHDRAudioMode->SetDataDynamicGetter(MAKE_OPTIONS_DATA_CONTROL(GetUseHDRAudioMode));
+			UseHDRAudioMode->SetDataDynamicSetter(MAKE_OPTIONS_DATA_CONTROL(SetUseHDRAudioMode));
+			UseHDRAudioMode->SetShouldApplySettingsImmediately(true);
+
+			SoundCategoryCollection->AddChildListData(UseHDRAudioMode);
+		}
+	}
+
 	RegisteredOptionsTabCollections.Add(AudioTabCollection);
 }
 
