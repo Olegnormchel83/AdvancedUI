@@ -8,6 +8,7 @@
 
 class UCommonNumericTextBlock;
 class UAnalogSlider;
+class UListDataObject_Scalar;
 
 UCLASS(Abstract, BlueprintType, meta = (DisableNativeTick))
 class FRONTENDUI_API UWidget_ListEntry_Scalar : public UWidget_ListEntry_Base
@@ -24,6 +25,12 @@ protected:
 	//~ End UWidget_ListEntry_Base Interface
 	
 private:
+	UFUNCTION()
+	void OnSliderValueChanged(float Value);
+
+	UFUNCTION()
+	void OnSliderMouseCaptureBegin();
+	
 	//***** Bound Widgets *****//
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, AllowPrivateAccess = "true"))
 	UCommonNumericTextBlock* CommonNumeric_SettingValue;
@@ -31,4 +38,7 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, AllowPrivateAccess = "true"))
 	UAnalogSlider* AnalogSlider_SettingSlider;
 	//***** Bound Widgets *****//
+
+	UPROPERTY(Transient)
+	UListDataObject_Scalar* CachedOwningScalarDataObject;
 };

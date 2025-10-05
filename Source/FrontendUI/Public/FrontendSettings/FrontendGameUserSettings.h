@@ -12,17 +12,35 @@ class FRONTENDUI_API UFrontendGameUserSettings : public UGameUserSettings
 	GENERATED_BODY()
 
 public:
+	UFrontendGameUserSettings();
+
 	static UFrontendGameUserSettings* Get();
 
 	//***** Gameplay Collection Tab *****//
 	UFUNCTION()
-	FString GetCurrentGameDifficulty() const {return CurrentGameDifficulty;};
+	FString GetCurrentGameDifficulty() const { return CurrentGameDifficulty; };
 
 	UFUNCTION()
-	void SetCurrentGameDifficulty(const FString& InNewGameDifficulty) {CurrentGameDifficulty = InNewGameDifficulty;};
+	void SetCurrentGameDifficulty(const FString& InNewGameDifficulty) { CurrentGameDifficulty = InNewGameDifficulty; };
 	//***** Gameplay Collection Tab *****//
-	
+
+	//***** Audio Collection Tab *****//
+	UFUNCTION()
+	float GetOverallVolume() const { return OverallVolume; };
+
+	UFUNCTION()
+	void SetOverallVolume(float InVolume);
+	//***** Audio Collection Tab *****//
+
 private:
+	//***** Gameplay Collection Tab *****//
 	UPROPERTY(Config)
 	FString CurrentGameDifficulty;
+	//***** Gameplay Collection Tab *****//
+
+	//***** Audio Collection Tab *****//
+	UPROPERTY(Config)
+	float OverallVolume;
+
+	//***** Audio Collection Tab *****//
 };
