@@ -42,6 +42,10 @@ protected:
 	// Super call is not needed.
 	virtual void OnOwningListDataObjectModified(UListDataObject_Base* OwningModifiedData, EOptionListDataModifyReason ModifyReason);
 
+	// The child should override this to change editable state of the widgets it owns.
+	//  Super call is expected
+	virtual void OnToggleEditableState(bool bIsEditable);
+	
 	void SelectThisEntryWidget();
 	
 private:

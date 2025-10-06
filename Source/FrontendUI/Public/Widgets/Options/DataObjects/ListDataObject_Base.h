@@ -17,9 +17,10 @@ class FRONTENDUI_API UListDataObject_Base : public UObject
 	GENERATED_BODY()
 
 public:
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnListDataModifiedDelegate, UListDataObject_Base*, EOptionListDataModifyReason);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnListDataModifiedDelegate, UListDataObject_Base*,
+	                                     EOptionListDataModifyReason);
 	FOnListDataModifiedDelegate OnListDataModified;
-	
+
 	LIST_DATA_ACCESSOR(FName, DataID)
 	LIST_DATA_ACCESSOR(FText, DataDisplayName)
 	LIST_DATA_ACCESSOR(FText, DescriptionRichText)
@@ -28,25 +29,43 @@ public:
 	LIST_DATA_ACCESSOR(UListDataObject_Base*, ParentData)
 
 	void InitDataObject();
-	
+
 	// Empty in the base class. Child class ListDataObject_Collection
 	// should override it. The function should return all the child data a tab has
 	virtual TArray<UListDataObject_Base*> GetAllChildListData() const { return TArray<UListDataObject_Base*>(); }
 	virtual bool HasAnyChildListData() const { return false; }
 
-	void SetShouldApplySettingsImmediately(bool bInShouldApplyRightAway) { bShouldApplyChangesImmediately = bInShouldApplyRightAway; };
+	void SetShouldApplySettingsImmediately(bool bInShouldApplyRightAway)
+	{
+		bShouldApplyChangesImmediately = bInShouldApplyRightAway;
+	};
 
 	// The child class should override them to provide implementations for resetting the data
-	virtual bool HasDefaultValue() const {return false;}
-	virtual bool CanResetBackToDefaultValue() const {return false;}
-	virtual bool TryResetBackToDefaultValue() {return false;}
-	
+	virtual bool HasDefaultValue() const { return false; }
+	virtual bool CanResetBackToDefaultValue() const { return false; }
+	virtual bool TryResetBackToDefaultValue() { return false; }
+
+	// Gets called from OptionsDataRegistry for adding in edit conditions for the constructed list data objects
+	void AddEditCondition(const FOptionsDataEditConditionDescriptor& InEditCondition);
+
+	bool IsDataCurrentlyEditable();
+
 protected:
 	// Empty in base class. The child classes should override it to handle the initialized needed correctly
 	virtual void OnDataObjectInitialized();
 
-	virtual void NotifyListDataModified(UListDataObject_Base* ModifiedData, EOptionListDataModifyReason ModifyReason = EOptionListDataModifyReason::DirectlyModified);
-	
+	virtual void NotifyListDataModified(UListDataObject_Base* ModifiedData,
+	                                    EOptionListDataModifyReason ModifyReason =
+		                                    EOptionListDataModifyReason::DirectlyModified);
+
+	// The child class should override this to allow the value be set to the forced string value
+	virtual bool CanSetToForcedStringValue(const FString& InForcedValue) const { return false; }
+
+	// The child class should override this to specify how to set the current value to the forced value
+	virtual void OnSetToForcedStringValue(const FString& InForcedValue)
+	{
+	}
+
 private:
 	FName DataID;
 	FText DataDisplayName;
@@ -58,4 +77,7 @@ private:
 	UListDataObject_Base* ParentData;
 
 	bool bShouldApplyChangesImmediately = false;
+
+	UPROPERTY(Transient)
+	TArray<FOptionsDataEditConditionDescriptor> EditConditionDescArray;
 };
