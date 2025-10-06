@@ -258,6 +258,8 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 	VideoTabCollection->SetDataID(FName("VideoTabCollection"));
 	VideoTabCollection->SetDataDisplayName(FText::FromString(TEXT("Video")));
 
+	UListDataObject_StringEnum* CreatedWindowMode = nullptr;
+	
 	// Display Category
 	{
 		UListDataObject_Collection* DisplayCategoryCollection = NewObject<UListDataObject_Collection>();
@@ -292,6 +294,8 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			WindowMode->SetShouldApplySettingsImmediately(true);
 
 			WindowMode->AddEditCondition(PackagedBuildOnlyCondition);
+
+			CreatedWindowMode = WindowMode;
 			
 			DisplayCategoryCollection->AddChildListData(WindowMode);
 		}
@@ -308,8 +312,52 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			ScreenResolution->SetShouldApplySettingsImmediately(true);
 
 			ScreenResolution->AddEditCondition(PackagedBuildOnlyCondition);
+
+			FOptionsDataEditConditionDescriptor WindowModeEditCondition;
+			WindowModeEditCondition.SetEditConditionFunc(
+				[CreatedWindowMode]()->bool
+				{
+					const bool bIsBorderlessWindow = CreatedWindowMode->GetCurrentValueAsEnum<EWindowMode::Type>() == EWindowMode::WindowedFullscreen;
+
+					return !bIsBorderlessWindow;
+				}
+			);
+
+			WindowModeEditCondition.SetDisabledRichReason(TEXT("\n\n<Disabled>Screen resolution is not adjustable when th 'Window Mode' is set to Borderless Window."
+													  " The value must match with the maximum allowed resolution.</>"));
+			WindowModeEditCondition.SetDisabledForcedStringValue(ScreenResolution->GetMaximumAllowedResolution());
+
+			ScreenResolution->AddEditCondition(WindowModeEditCondition);
+
+			ScreenResolution->AddEditDependencyData(CreatedWindowMode);
 			
 			DisplayCategoryCollection->AddChildListData(ScreenResolution);
+		}
+	}
+
+	// Graphics Category
+	{
+		UListDataObject_Collection* GraphicsCategoryCollection = NewObject<UListDataObject_Collection>();
+		GraphicsCategoryCollection->SetDataID(FName("GraphicsCategoryCollection"));
+		GraphicsCategoryCollection->SetDataDisplayName(FText::FromString(TEXT("Graphics")));
+
+		VideoTabCollection->AddChildListData(GraphicsCategoryCollection);
+
+		// Display Gamma
+		{
+			UListDataObject_Scalar* DisplayGamma = NewObject<UListDataObject_Scalar>();
+			DisplayGamma->SetDataID(FName("DisplayGamma"));
+			DisplayGamma->SetDataDisplayName(FText::FromString(TEXT("Brightness")));
+			DisplayGamma->SetDescriptionRichText(FText::FromString(TEXT("This is description for Brightness")));
+			DisplayGamma->SetDisplayValueRange(TRange<float>(0.f, 1.f));
+			DisplayGamma->SetOutputValueRange(TRange<float>(1.7f, 2.7f)); // Default Unreal value is 2.2f
+			DisplayGamma->SetDisplayNumericType(ECommonNumericType::Percentage);
+			DisplayGamma->SetNumberFormattingOptions(UListDataObject_Scalar::NoDecimal());
+			DisplayGamma->SetDataDynamicGetter(MAKE_OPTIONS_DATA_CONTROL(GetCurrentDisplayGamma));
+			DisplayGamma->SetDataDynamicSetter(MAKE_OPTIONS_DATA_CONTROL(SetCurrentDisplayGamma));
+			DisplayGamma->SetDefaultValueFromString(LexToString(2.2f));
+
+			GraphicsCategoryCollection->AddChildListData(DisplayGamma);
 		}
 	}
 

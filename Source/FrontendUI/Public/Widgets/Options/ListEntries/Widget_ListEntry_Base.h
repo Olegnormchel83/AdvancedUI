@@ -42,6 +42,8 @@ protected:
 	// Super call is not needed.
 	virtual void OnOwningListDataObjectModified(UListDataObject_Base* OwningModifiedData, EOptionListDataModifyReason ModifyReason);
 
+	virtual void OnOwningDependencyDataObjectModified(UListDataObject_Base* OwningModifiedDependencyData, EOptionListDataModifyReason ModifyReason);
+	
 	// The child should override this to change editable state of the widgets it owns.
 	//  Super call is expected
 	virtual void OnToggleEditableState(bool bIsEditable);
@@ -53,4 +55,7 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional, AllowPrivateAccess = "true"))
 	UCommonTextBlock* CommonText_SettingDisplayName;
 	//***** Bound Widgets *****//
+
+	UPROPERTY(Transient)
+	UListDataObject_Base* CachedOwningDataObject;
 };

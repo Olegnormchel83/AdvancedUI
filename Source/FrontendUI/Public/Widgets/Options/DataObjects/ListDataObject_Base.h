@@ -21,6 +21,8 @@ public:
 	                                     EOptionListDataModifyReason);
 	FOnListDataModifiedDelegate OnListDataModified;
 
+	FOnListDataModifiedDelegate OnDependencyDataModified;
+
 	LIST_DATA_ACCESSOR(FName, DataID)
 	LIST_DATA_ACCESSOR(FText, DataDisplayName)
 	LIST_DATA_ACCESSOR(FText, DescriptionRichText)
@@ -48,6 +50,9 @@ public:
 	// Gets called from OptionsDataRegistry for adding in edit conditions for the constructed list data objects
 	void AddEditCondition(const FOptionsDataEditConditionDescriptor& InEditCondition);
 
+	// Gets called from OptionsDataRegistry to add in dependecy data
+	void AddEditDependencyData(UListDataObject_Base* InDependencyData);
+	
 	bool IsDataCurrentlyEditable();
 
 protected:
@@ -66,6 +71,8 @@ protected:
 	{
 	}
 
+	virtual void OnEditDependencyDataModified(UListDataObject_Base* ModifiedDependencyData,  EOptionListDataModifyReason ModifyReason);
+	
 private:
 	FName DataID;
 	FText DataDisplayName;
