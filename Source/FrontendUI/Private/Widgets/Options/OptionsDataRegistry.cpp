@@ -9,6 +9,7 @@
 #include "Widgets/Options/DataObjects/ListDataObject_String.h"
 #include "FrontendFunctionLibrary.h"
 #include "FrontendGameplayTags.h"
+#include "ShaderCompiler.h"
 #include "Widgets/Options/DataObjects/ListDataObject_Scalar.h"
 #include "Widgets/Options/DataObjects/ListDataObject_StringResolution.h"
 
@@ -398,6 +399,27 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			ResolutionScale->AddEditDependencyData(CreatedOverallQuality);
 
 			GraphicsCategoryCollection->AddChildListData(ResolutionScale);
+		}
+
+		// Global Illumination Quality
+		{
+			UListDataObject_StringInteger* GlobalIllumination = NewObject<UListDataObject_StringInteger>();
+			GlobalIllumination->SetDataID(FName("GlobalIllumination"));
+			GlobalIllumination->SetDataDisplayName(FText::FromString(TEXT("Global Illumination")));
+			GlobalIllumination->SetDescriptionRichText(FText::FromString(TEXT("This is description for Global Illumination")));
+			GlobalIllumination->AddIntegerOption(0, FText::FromString(TEXT("Low")));
+			GlobalIllumination->AddIntegerOption(1, FText::FromString(TEXT("Medium")));
+			GlobalIllumination->AddIntegerOption(2, FText::FromString(TEXT("High")));
+			GlobalIllumination->AddIntegerOption(3, FText::FromString(TEXT("Epic")));
+			GlobalIllumination->SetDataDynamicGetter(MAKE_OPTIONS_DATA_CONTROL(GetGlobalIlluminationQuality));
+			GlobalIllumination->SetDataDynamicSetter(MAKE_OPTIONS_DATA_CONTROL(SetGlobalIlluminationQuality));
+			GlobalIllumination->SetShouldApplySettingsImmediately(true);
+
+			GlobalIllumination->AddEditDependencyData(CreatedOverallQuality);
+
+			CreatedOverallQuality->AddEditDependencyData(GlobalIllumination);
+			
+			GraphicsCategoryCollection->AddChildListData(GlobalIllumination);
 		}
 	}
 
