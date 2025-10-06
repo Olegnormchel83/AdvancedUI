@@ -15,7 +15,7 @@ public:
 	void AddDynamicOption(const FString& InStringValue, const FText& InDisplayText);
 	void AdvanceToNextOption();
 	void BackToPreviousOption();
-	void OnRotatorInitiatedValueChagned(const FText& InNewSelectedText);
+	void OnRotatorInitiatedValueChanged(const FText& InNewSelectedText);
 
 protected:
 	//~ Begin UListDataObject_Base Interface

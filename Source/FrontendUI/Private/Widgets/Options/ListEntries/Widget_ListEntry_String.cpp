@@ -7,6 +7,7 @@
 #include "Widgets/Options/DataObjects/ListDataObject_String.h"
 #include "Widgets/Components/FrontendCommonButtonBase.h"
 #include "CommonInputSubsystem.h"
+#include "FrontendDebugHelper.h"
 
 void UWidget_ListEntry_String::NativeOnInitialized()
 {
@@ -78,7 +79,6 @@ void UWidget_ListEntry_String::OnRotatorValueChanged(int32 Value, bool bUserInit
 	}
 
 	UCommonInputSubsystem* CommonInputSubsystem = GetInputSubsystem();
-
 	if (!CommonInputSubsystem || !bUserInitiated)
 	{
 		return;
@@ -87,6 +87,6 @@ void UWidget_ListEntry_String::OnRotatorValueChanged(int32 Value, bool bUserInit
 	if (CommonInputSubsystem->GetCurrentInputType() == ECommonInputType::Gamepad)
 	{
 		CachedOwningStringDataObject->
-			OnRotatorInitiatedValueChagned(CommonRotator_AvailableOptions->GetSelectedText());
+			OnRotatorInitiatedValueChanged(CommonRotator_AvailableOptions->GetSelectedText());
 	}
 }

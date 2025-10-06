@@ -105,7 +105,7 @@ void UListDataObject_String::BackToPreviousOption()
 	}
 }
 
-void UListDataObject_String::OnRotatorInitiatedValueChagned(const FText& InNewSelectedText)
+void UListDataObject_String::OnRotatorInitiatedValueChanged(const FText& InNewSelectedText)
 {
 	const int32 FoundIndex = AvailableOptionsTextArray.IndexOfByPredicate(
 		[InNewSelectedText](const FText& AvailableText)-> bool
@@ -121,8 +121,11 @@ void UListDataObject_String::OnRotatorInitiatedValueChagned(const FText& InNewSe
 
 		if (DataDynamicSetter)
 		{
-			DataDynamicGetter->SetValueFromString(CurrentStringValue);
-
+			DataDynamicSetter->SetValueFromString(CurrentStringValue);
+			
+			Debug::Print(
+			TEXT("DataDynamicSetter is used. The latest value from Getter: ") + DataDynamicGetter->GetValueAsString());
+			
 			NotifyListDataModified(this);
 		}
 	}
