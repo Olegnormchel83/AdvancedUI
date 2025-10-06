@@ -16,7 +16,7 @@ public:
 	void AdvanceToNextOption();
 	void BackToPreviousOption();
 	void OnRotatorInitiatedValueChagned(const FText& InNewSelectedText);
-	
+
 protected:
 	//~ Begin UListDataObject_Base Interface
 	virtual void OnDataObjectInitialized() override;
@@ -25,12 +25,12 @@ protected:
 	virtual bool CanSetToForcedStringValue(const FString& InForcedValue) const override;
 	virtual void OnSetToForcedStringValue(const FString& InForcedValue) override;
 	//~ End UListDataObject_Base Interface
-	
+
 	bool TrySetDisplayTextFromStringValue(const FString& InStringValue);
-	
+
 	FString CurrentStringValue;
 	FText CurrentDisplayText;
-	
+
 	TArray<FString> AvailableOptionsStringArray;
 	TArray<FText> AvailableOptionsTextArray;
 
@@ -49,15 +49,15 @@ public:
 	void OverrideFalseDisplayText(const FText& InNewFalseDisplayText);
 	void SetTrueAsDefaultValue();
 	void SetFalseAsDefaultValue();
-	
+
 protected:
 	//~ Begin UListDataObject_String Interface
 	virtual void OnDataObjectInitialized() override;
 	//~ End UListDataObject_String Interface
-	
+
 private:
 	void TryInitBoolValues();
-	
+
 	const FString TrueString = TEXT("true");
 	const FString FalseString = TEXT("false");
 };
@@ -68,7 +68,7 @@ class FRONTENDUI_API UListDataObject_StringEnum : public UListDataObject_String
 	GENERATED_BODY()
 
 public:
-	template<typename EnumType>
+	template <typename EnumType>
 	void AddEnumOption(EnumType InEnumOption, const FText& InDisplayText)
 	{
 		const UEnum* StaticEnumOption = StaticEnum<EnumType>();
@@ -77,15 +77,15 @@ public:
 		AddDynamicOption(ConvertedEnumString, InDisplayText);
 	}
 
-	template<typename EnumType>
+	template <typename EnumType>
 	EnumType GetCurrentValueAsEnum() const
 	{
 		const UEnum* StaticEnumOption = StaticEnum<EnumType>();
-		
+
 		return (EnumType)StaticEnumOption->GetValueByNameString(CurrentStringValue);
 	}
 
-	template<typename EnumType>
+	template <typename EnumType>
 	void SetDefaultValueFromEnumOption(EnumType InEnumOption)
 	{
 		const UEnum* StaticEnumOption = StaticEnum<EnumType>();
@@ -93,4 +93,20 @@ public:
 
 		SetDefaultValueFromString(ConvertedEnumString);
 	}
+};
+
+UCLASS()
+class FRONTENDUI_API UListDataObject_StringInteger : public UListDataObject_String
+{
+	GENERATED_BODY()
+
+public:
+	void AddIntegerOption(int32 InIntegerValue, const FText& InDisplayText);
+
+protected:
+	//~ Begin UListDataObject_String Interface
+	virtual void OnDataObjectInitialized() override;
+	virtual void OnEditDependencyDataModified(UListDataObject_Base* ModifiedDependencyData,
+	                                          EOptionListDataModifyReason ModifyReason) override;
+	//~ End UListDataObject_String Interface
 };
