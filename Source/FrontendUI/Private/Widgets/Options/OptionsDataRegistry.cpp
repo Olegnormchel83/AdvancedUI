@@ -11,6 +11,7 @@
 #include "FrontendGameplayTags.h"
 #include "Widgets/Options/DataObjects/ListDataObject_Scalar.h"
 #include "Widgets/Options/DataObjects/ListDataObject_StringResolution.h"
+#include "Widgets/Options/DataObjects/ListDataObject_KeyRemap.h"
 #include "Internationalization/StringTableRegistry.h"
 #include "EnhancedInputSubsystems.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
@@ -683,11 +684,22 @@ void UOptionsDataRegistry::InitControlCollectionTab(ULocalPlayer* InOwningLocalP
 					{
 						if (MappableKeyProfile->DoesMappingPassQueryOptions(KeyMapping, KeyboardMouseOnly))
 						{
-							Debug::Print(
-								TEXT("\n\n***KeyboardMouse***\n\n Mapping ID: ") + KeyMapping.GetMappingName().ToString() +
-								TEXT(" Display Name: ") + KeyMapping.GetDisplayName().ToString() +
-								TEXT(" Bound Key: ") + KeyMapping.GetCurrentKey().GetDisplayName().ToString()
-							);
+							if (KeyMapping.GetDisplayCategory().EqualToCaseIgnored(FText::FromString(TEXT("Locomotion"))))
+							{
+								continue;
+							}
+							
+							UListDataObject_KeyRemap* KeyRemapDataObject = NewObject<UListDataObject_KeyRemap>();
+							KeyRemapDataObject->SetDataID(FName("KeyRemapData"));
+							KeyRemapDataObject->SetDataDisplayName(KeyMapping.GetDisplayName());
+							KeyRemapDataObject->InitKeyRemapData(
+								EIUserSettings,
+								MappableKeyProfile,
+								ECommonInputType::MouseAndKeyboard,
+								KeyMapping
+								);
+
+							KeyboardMouseCollection->AddChildListData(KeyRemapDataObject);
 						}
 					}
 				}

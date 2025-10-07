@@ -25,10 +25,15 @@ protected:
 	// The child blueprint should override this function for gamepad interaction to function properly
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "Get Widget To Focud For Gamepad"))
 	UWidget* BP_GetWidgetToFocudForGamepad() const;
+
+	// The child widget blueprint should override this function to handle the highlight state when this entry widget is hovered or selected
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnToggleEntryWidgetHighlightState"))
+	void BP_OnToggleEntryWidgetHighlightState(bool bShouldHighlight) const;
 	
 	//~ Begin IUserObjectListEntry Interface
 	virtual void NativeOnListItemObjectSet(UObject* ListItemObject) override;
 	virtual void NativeOnEntryReleased() override;
+	virtual void NativeOnItemSelectionChanged(bool bIsSelected) override;
 	//~ End IUserObjectListEntry Interface
 
 	//~ Begin UUserWidget Interface
