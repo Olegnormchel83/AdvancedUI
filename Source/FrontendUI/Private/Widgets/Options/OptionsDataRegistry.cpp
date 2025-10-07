@@ -12,6 +12,10 @@
 #include "Widgets/Options/DataObjects/ListDataObject_Scalar.h"
 #include "Widgets/Options/DataObjects/ListDataObject_StringResolution.h"
 #include "Internationalization/StringTableRegistry.h"
+#include "EnhancedInputSubsystems.h"
+#include "UserSettings/EnhancedInputUserSettings.h"
+
+#include "FrontendDebugHelper.h"
 
 #define MAKE_OPTIONS_DATA_CONTROL(SetterOrGetterFuncName) \
 	MakeShared<FOptionsDataInteractionHelper>(GET_FUNCTION_NAME_STRING_CHECKED(UFrontendGameUserSettings, SetterOrGetterFuncName))
@@ -23,7 +27,7 @@ void UOptionsDataRegistry::InitOptionsDataRegistry(ULocalPlayer* InOwningLocalPl
 	InitGameplayCollectionTab();
 	InitAudioCollectionTab();
 	InitVideoCollectionTab();
-	InitControlCollectionTab();
+	InitControlCollectionTab(InOwningLocalPlayer);
 }
 
 TArray<UListDataObject_Base*> UOptionsDataRegistry::GetListSourceItemsBySelectedTabID(
@@ -262,7 +266,7 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 	VideoTabCollection->SetDataDisplayName(FText::FromString(TEXT("Video")));
 
 	UListDataObject_StringEnum* CreatedWindowMode = nullptr;
-	
+
 	// Display Category
 	{
 		UListDataObject_Collection* DisplayCategoryCollection = NewObject<UListDataObject_Collection>();
@@ -273,19 +277,20 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 
 		FOptionsDataEditConditionDescriptor PackagedBuildOnlyCondition;
 		PackagedBuildOnlyCondition.SetEditConditionFunc(
-			[]()->bool
+			[]()-> bool
 			{
-				const bool bIsInEditor =  GIsEditor || GIsPlayInEditorWorld;
+				const bool bIsInEditor = GIsEditor || GIsPlayInEditorWorld;
 
 				return !bIsInEditor;
 			}
 		);
-		PackagedBuildOnlyCondition.SetDisabledRichReason(TEXT("\n\n<Disabled>This setting can only be adjusted in a packaged build.</>"));
-			
+		PackagedBuildOnlyCondition.SetDisabledRichReason(
+			TEXT("\n\n<Disabled>This setting can only be adjusted in a packaged build.</>"));
+
 		// Window Mode
 		{
 			/*const FText WindowModeDesc = LOCTABLE("/Game/FrontendUI/UI/StringTable/ST_OptionsScreenDescription.ST_OptionsScreenDescription", "WindowModeDescKey");*/
-			
+
 			UListDataObject_StringEnum* WindowMode = NewObject<UListDataObject_StringEnum>();
 			WindowMode->SetDataID(FName("WindowMode"));
 			WindowMode->SetDataDisplayName(FText::FromString(TEXT("Window Mode")));
@@ -301,7 +306,7 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			WindowMode->AddEditCondition(PackagedBuildOnlyCondition);
 
 			CreatedWindowMode = WindowMode;
-			
+
 			DisplayCategoryCollection->AddChildListData(WindowMode);
 		}
 
@@ -320,22 +325,24 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 
 			FOptionsDataEditConditionDescriptor WindowModeEditCondition;
 			WindowModeEditCondition.SetEditConditionFunc(
-				[CreatedWindowMode]()->bool
+				[CreatedWindowMode]()-> bool
 				{
-					const bool bIsBorderlessWindow = CreatedWindowMode->GetCurrentValueAsEnum<EWindowMode::Type>() == EWindowMode::WindowedFullscreen;
+					const bool bIsBorderlessWindow = CreatedWindowMode->GetCurrentValueAsEnum<EWindowMode::Type>() ==
+						EWindowMode::WindowedFullscreen;
 
 					return !bIsBorderlessWindow;
 				}
 			);
 
-			WindowModeEditCondition.SetDisabledRichReason(TEXT("\n\n<Disabled>Screen resolution is not adjustable when th 'Window Mode' is set to Borderless Window."
-													  " The value must match with the maximum allowed resolution.</>"));
+			WindowModeEditCondition.SetDisabledRichReason(TEXT(
+				"\n\n<Disabled>Screen resolution is not adjustable when th 'Window Mode' is set to Borderless Window."
+				" The value must match with the maximum allowed resolution.</>"));
 			WindowModeEditCondition.SetDisabledForcedStringValue(ScreenResolution->GetMaximumAllowedResolution());
 
 			ScreenResolution->AddEditCondition(WindowModeEditCondition);
 
 			ScreenResolution->AddEditDependencyData(CreatedWindowMode);
-			
+
 			DisplayCategoryCollection->AddChildListData(ScreenResolution);
 		}
 	}
@@ -367,7 +374,7 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 		}
 
 		UListDataObject_StringInteger* CreatedOverallQuality = nullptr;
-		
+
 		// Overall Quality
 		{
 			UListDataObject_StringInteger* OverallQuality = NewObject<UListDataObject_StringInteger>();
@@ -424,7 +431,7 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			GlobalIllumination->AddEditDependencyData(CreatedOverallQuality);
 
 			CreatedOverallQuality->AddEditDependencyData(GlobalIllumination);
-			
+
 			GraphicsCategoryCollection->AddChildListData(GlobalIllumination);
 		}
 
@@ -443,9 +450,9 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			ShadowQuality->SetShouldApplySettingsImmediately(true);
 
 			ShadowQuality->AddEditDependencyData(CreatedOverallQuality);
-			
+
 			CreatedOverallQuality->AddEditDependencyData(ShadowQuality);
-			
+
 			GraphicsCategoryCollection->AddChildListData(ShadowQuality);
 		}
 
@@ -466,7 +473,7 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			AntiAliasingQuality->AddEditDependencyData(CreatedOverallQuality);
 
 			CreatedOverallQuality->AddEditDependencyData(AntiAliasingQuality);
-			
+
 			GraphicsCategoryCollection->AddChildListData(AntiAliasingQuality);
 		}
 
@@ -487,7 +494,7 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			ViewDistanceQuality->AddEditDependencyData(CreatedOverallQuality);
 
 			CreatedOverallQuality->AddEditDependencyData(ViewDistanceQuality);
-				
+
 			GraphicsCategoryCollection->AddChildListData(ViewDistanceQuality);
 		}
 
@@ -508,7 +515,7 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			TextureQuality->AddEditDependencyData(CreatedOverallQuality);
 
 			CreatedOverallQuality->AddEditDependencyData(TextureQuality);
-			
+
 			GraphicsCategoryCollection->AddChildListData(TextureQuality);
 		}
 
@@ -529,7 +536,7 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			VisualEffectsQuality->AddEditDependencyData(CreatedOverallQuality);
 
 			CreatedOverallQuality->AddEditDependencyData(VisualEffectsQuality);
-			
+
 			GraphicsCategoryCollection->AddChildListData(VisualEffectsQuality);
 		}
 
@@ -550,7 +557,7 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			ReflectionQuality->AddEditDependencyData(CreatedOverallQuality);
 
 			CreatedOverallQuality->AddEditDependencyData(ReflectionQuality);
-			
+
 			GraphicsCategoryCollection->AddChildListData(ReflectionQuality);
 		}
 
@@ -571,7 +578,7 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			PostProcessingQuality->AddEditDependencyData(CreatedOverallQuality);
 
 			CreatedOverallQuality->AddEditDependencyData(PostProcessingQuality);
-			
+
 			GraphicsCategoryCollection->AddChildListData(PostProcessingQuality);
 		}
 	}
@@ -597,16 +604,17 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 
 			FOptionsDataEditConditionDescriptor FullscreenOnlyCondition;
 			FullscreenOnlyCondition.SetEditConditionFunc(
-				[CreatedWindowMode]()->bool
+				[CreatedWindowMode]()-> bool
 				{
 					return CreatedWindowMode->GetCurrentValueAsEnum<EWindowMode::Type>() == EWindowMode::Fullscreen;
 				}
 			);
-			FullscreenOnlyCondition.SetDisabledRichReason(TEXT("\n\n<Disabled>This feature only works if the 'Window Mode' is set to 'Fullscreen' </>"));
+			FullscreenOnlyCondition.SetDisabledRichReason(
+				TEXT("\n\n<Disabled>This feature only works if the 'Window Mode' is set to 'Fullscreen' </>"));
 			FullscreenOnlyCondition.SetDisabledForcedStringValue(TEXT("false"));
 
 			VerticalSync->AddEditCondition(FullscreenOnlyCondition);
-			
+
 			AdvancedGraphicsCategoryCollection->AddChildListData(VerticalSync);
 		}
 
@@ -629,15 +637,63 @@ void UOptionsDataRegistry::InitVideoCollectionTab()
 			AdvancedGraphicsCategoryCollection->AddChildListData(FrameRateLimit);
 		}
 	}
-	
+
 	RegisteredOptionsTabCollections.Add(VideoTabCollection);
 }
 
-void UOptionsDataRegistry::InitControlCollectionTab()
+void UOptionsDataRegistry::InitControlCollectionTab(ULocalPlayer* InOwningLocalPlayer)
 {
 	UListDataObject_Collection* ControlTabCollection = NewObject<UListDataObject_Collection>();
 	ControlTabCollection->SetDataID(FName("ControlTabCollection"));
 	ControlTabCollection->SetDataDisplayName(FText::FromString("Control"));
+
+	UEnhancedInputLocalPlayerSubsystem* EISubsystem = InOwningLocalPlayer->GetSubsystem<
+		UEnhancedInputLocalPlayerSubsystem>();
+	check(EISubsystem);
+
+	UEnhancedInputUserSettings* EIUserSettings = EISubsystem->GetUserSettings();
+	check(EIUserSettings);
+
+	// Keyboard Mouse Category
+	{
+		UListDataObject_Collection* KeyboardMouseCollection = NewObject<UListDataObject_Collection>();
+		KeyboardMouseCollection->SetDataID(FName("KeyboardMouseCollection"));
+		KeyboardMouseCollection->SetDataDisplayName(FText::FromString("Keyboard & Mouse"));
+
+		ControlTabCollection->AddChildListData(KeyboardMouseCollection);
+
+		// Keyboard mouse inputs
+		{
+			FPlayerMappableKeyQueryOptions KeyboardMouseOnly;
+			KeyboardMouseOnly.KeyToMatch = EKeys::S;
+			KeyboardMouseOnly.bMatchBasicKeyTypes = true;
+
+			/*FPlayerMappableKeyQueryOptions GamepadOnly;
+			GamepadOnly.KeyToMatch = EKeys::Gamepad_FaceButton_Bottom;
+			GamepadOnly.bMatchBasicKeyTypes = true;*/
+
+			for (const auto& ProfilePair : EIUserSettings->GetAllAvailableKeyProfiles())
+			{
+				auto MappableKeyProfile = ProfilePair.Value;
+				check(MappableKeyProfile);
+
+				for (const auto& MappingRowPair : MappableKeyProfile->GetPlayerMappingRows())
+				{
+					for (const auto& KeyMapping : MappingRowPair.Value.Mappings)
+					{
+						if (MappableKeyProfile->DoesMappingPassQueryOptions(KeyMapping, KeyboardMouseOnly))
+						{
+							Debug::Print(
+								TEXT("\n\n***KeyboardMouse***\n\n Mapping ID: ") + KeyMapping.GetMappingName().ToString() +
+								TEXT(" Display Name: ") + KeyMapping.GetDisplayName().ToString() +
+								TEXT(" Bound Key: ") + KeyMapping.GetCurrentKey().GetDisplayName().ToString()
+							);
+						}
+					}
+				}
+			}
+		}
+	}
 
 	RegisteredOptionsTabCollections.Add(ControlTabCollection);
 }
