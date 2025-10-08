@@ -669,10 +669,6 @@ void UOptionsDataRegistry::InitControlCollectionTab(ULocalPlayer* InOwningLocalP
 			KeyboardMouseOnly.KeyToMatch = EKeys::S;
 			KeyboardMouseOnly.bMatchBasicKeyTypes = true;
 
-			/*FPlayerMappableKeyQueryOptions GamepadOnly;
-			GamepadOnly.KeyToMatch = EKeys::Gamepad_FaceButton_Bottom;
-			GamepadOnly.bMatchBasicKeyTypes = true;*/
-
 			for (const auto& ProfilePair : EIUserSettings->GetAllAvailableKeyProfiles())
 			{
 				auto MappableKeyProfile = ProfilePair.Value;
@@ -684,11 +680,12 @@ void UOptionsDataRegistry::InitControlCollectionTab(ULocalPlayer* InOwningLocalP
 					{
 						if (MappableKeyProfile->DoesMappingPassQueryOptions(KeyMapping, KeyboardMouseOnly))
 						{
-							if (KeyMapping.GetDisplayCategory().EqualToCaseIgnored(FText::FromString(TEXT("Locomotion"))))
+							if (KeyMapping.GetDisplayCategory().EqualToCaseIgnored(
+								FText::FromString(TEXT("Locomotion"))))
 							{
 								continue;
 							}
-							
+
 							UListDataObject_KeyRemap* KeyRemapDataObject = NewObject<UListDataObject_KeyRemap>();
 							KeyRemapDataObject->SetDataID(FName("KeyRemapData"));
 							KeyRemapDataObject->SetDataDisplayName(KeyMapping.GetDisplayName());
@@ -697,9 +694,58 @@ void UOptionsDataRegistry::InitControlCollectionTab(ULocalPlayer* InOwningLocalP
 								MappableKeyProfile,
 								ECommonInputType::MouseAndKeyboard,
 								KeyMapping
-								);
+							);
 
 							KeyboardMouseCollection->AddChildListData(KeyRemapDataObject);
+						}
+					}
+				}
+			}
+		}
+
+		// Gamepad Category
+		{
+			UListDataObject_Collection* GamepadCategoryCollection = NewObject<UListDataObject_Collection>();
+			GamepadCategoryCollection->SetDataID(FName("GamepadCategoryCollection"));
+			GamepadCategoryCollection->SetDataDisplayName(FText::FromString("Gamepad"));
+
+			ControlTabCollection->AddChildListData(GamepadCategoryCollection);
+
+			// Gamepad Inputs
+			{
+				FPlayerMappableKeyQueryOptions GamepadOnly;
+				GamepadOnly.KeyToMatch = EKeys::Gamepad_FaceButton_Bottom;
+				GamepadOnly.bMatchBasicKeyTypes = true;
+
+				for (const auto MappingRowPair : EIUserSettings->GetAllAvailableKeyProfiles())
+				{
+					auto MappableKeyProfile = MappingRowPair.Value;
+					check(MappableKeyProfile);
+
+					for (const auto& MappingRow : MappableKeyProfile->GetPlayerMappingRows())
+					{
+						for (const auto& KeyMapping : MappingRow.Value.Mappings)
+						{
+							if (MappableKeyProfile->DoesMappingPassQueryOptions(KeyMapping, GamepadOnly))
+							{
+								if (KeyMapping.GetDisplayCategory().EqualToCaseIgnored(
+									FText::FromString(TEXT("Locomotion"))))
+								{
+									continue;
+								}
+
+								UListDataObject_KeyRemap* KeyRemapDataObject = NewObject<UListDataObject_KeyRemap>();
+								KeyRemapDataObject->SetDataID(FName("KeyRemapData"));
+								KeyRemapDataObject->SetDataDisplayName(KeyMapping.GetDisplayName());
+								KeyRemapDataObject->InitKeyRemapData(
+									EIUserSettings,
+									MappableKeyProfile,
+									ECommonInputType::Gamepad,
+									KeyMapping
+								);
+
+								GamepadCategoryCollection->AddChildListData(KeyRemapDataObject);
+							}
 						}
 					}
 				}

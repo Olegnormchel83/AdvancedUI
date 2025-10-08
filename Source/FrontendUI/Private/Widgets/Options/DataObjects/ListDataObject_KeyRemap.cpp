@@ -31,7 +31,7 @@ FSlateBrush UListDataObject_KeyRemap::GetIconFromCurrentKey() const
 
 	const bool bHasFoundBrush = UCommonInputPlatformSettings::Get()->TryGetInputBrush(
 		FoundBrush,
-		GetOwningKeyRemapping()->GetCurrentKey(),
+		GetOwningKeyMapping()->GetCurrentKey(),
 		CachedDesiredInputType,
 		CommonInputSubsystem->GetCurrentGamepadName()
 	);
@@ -40,7 +40,7 @@ FSlateBrush UListDataObject_KeyRemap::GetIconFromCurrentKey() const
 	{
 		Debug::Print(
 			TEXT("Unable to find an icon for the key: ") +
-			GetOwningKeyRemapping()->GetCurrentKey().GetDisplayName().ToString() +
+			GetOwningKeyMapping()->GetCurrentKey().GetDisplayName().ToString() +
 			TEXT(". Empty brush was applied.")
 		);
 	}
@@ -48,7 +48,50 @@ FSlateBrush UListDataObject_KeyRemap::GetIconFromCurrentKey() const
 	return FoundBrush;
 }
 
-FPlayerKeyMapping* UListDataObject_KeyRemap::GetOwningKeyRemapping() const
+void UListDataObject_KeyRemap::BindNewInputKey(const FKey& InNewKey)
+{
+	check(CachedOwningInputUserSettings);
+
+	FMapPlayerKeyArgs KeyArgs;
+	KeyArgs.MappingName = CachedOwningMappingName;
+	KeyArgs.Slot = CachedOwningMappableKeySlot;
+	KeyArgs.NewKey = InNewKey;
+
+	FGameplayTagContainer Container;
+	CachedOwningInputUserSettings->MapPlayerKey(KeyArgs, Container);
+	CachedOwningInputUserSettings->SaveSettings();
+
+	NotifyListDataModified(this);
+}
+
+bool UListDataObject_KeyRemap::HasDefaultValue() const
+{
+	return GetOwningKeyMapping()->GetDefaultKey().IsValid();
+}
+
+bool UListDataObject_KeyRemap::CanResetBackToDefaultValue() const
+{
+	return HasDefaultValue() && GetOwningKeyMapping()->IsCustomized();
+}
+
+bool UListDataObject_KeyRemap::TryResetBackToDefaultValue()
+{
+	if (CanResetBackToDefaultValue())
+	{
+		check(CachedOwningInputUserSettings);
+		GetOwningKeyMapping()->ResetToDefault();
+
+		CachedOwningInputUserSettings->SaveSettings();
+
+		NotifyListDataModified(this, EOptionListDataModifyReason::ResetToDefault);
+
+		return true;
+	}
+
+	return false;
+}
+
+FPlayerKeyMapping* UListDataObject_KeyRemap::GetOwningKeyMapping() const
 {
 	check(CachedOwningKeyProfile);
 

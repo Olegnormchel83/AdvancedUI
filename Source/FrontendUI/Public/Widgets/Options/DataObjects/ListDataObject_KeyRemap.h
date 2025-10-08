@@ -25,10 +25,18 @@ public:
 	);
 
 	FSlateBrush GetIconFromCurrentKey() const;
-	
+
+	void BindNewInputKey(const FKey& InNewKey);
+
+	//~ Begin UListDataObject_Base Interface
+	virtual bool HasDefaultValue() const override;
+	virtual bool CanResetBackToDefaultValue() const override;
+	virtual bool TryResetBackToDefaultValue() override;
+	//~ End UListDataObject_Base Interface
+
 private:
-	FPlayerKeyMapping* GetOwningKeyRemapping() const;
-	
+	FPlayerKeyMapping* GetOwningKeyMapping() const;
+
 	UPROPERTY(Transient)
 	UEnhancedInputUserSettings* CachedOwningInputUserSettings;
 
