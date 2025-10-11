@@ -5,6 +5,8 @@
 
 #include "PreLoadScreenManager.h"
 #include "FrontendSettings/FrontendLoadingScreenSettings.h"
+#include "Blueprint/UserWidget.h"
+#include "Interfaces/FrontendLoadingScreenInterface.h"
 
 bool UFrontendLoadingScreenSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
@@ -97,10 +99,16 @@ void UFrontendLoadingScreenSubsystem::TryUpdateLoadingScreen()
 
 	if (ShouldShowLoadingScreen())
 	{
+		TryDisplayLoadingScreenIfNone();
+
 		OnLoadingReasonUpdated.Broadcast(CurrentLoadingReason);
 	}
 	else
 	{
+		TryRemoveLoadingScreen();
+
+		HoldLoadingScreenStartUpTime = -1.f;
+
 		SetTickableTickType(ETickableTickType::Never);
 	}
 }
@@ -119,7 +127,7 @@ bool UFrontendLoadingScreenSubsystem::ShouldShowLoadingScreen()
 {
 	const UFrontendLoadingScreenSettings* LoadingScreenSettings = GetDefault<UFrontendLoadingScreenSettings>();
 
-	if (GIsEditor() && !LoadingScreenSettings->bShouldLoadingScreenInEditor)
+	if (GIsEditor && !LoadingScreenSettings->bShouldLoadingScreenInEditor)
 	{
 		return false;
 	}
@@ -133,11 +141,11 @@ bool UFrontendLoadingScreenSubsystem::ShouldShowLoadingScreen()
 	}
 
 	CurrentLoadingReason = TEXT("Waiting for Texture Streaming");
-	
+
 	// There's no need to show the loading screen. Allow the world to be rendered to our viewport here
 	GetGameInstance()->GetGameViewportClient()->bDisableWorldRendering = false;
 
-	const float CurrentTime =  FPlatformTime::Seconds();
+	const float CurrentTime = FPlatformTime::Seconds();
 
 	if (HoldLoadingScreenStartUpTime < 0.f)
 	{
@@ -150,7 +158,7 @@ bool UFrontendLoadingScreenSubsystem::ShouldShowLoadingScreen()
 	{
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -170,7 +178,7 @@ bool UFrontendLoadingScreenSubsystem::CheckTheNeedToShowLoadingScreen()
 		return true;
 	}
 
-	if (OwningWorld->HasBegunPlay())
+	if (!OwningWorld->HasBegunPlay())
 	{
 		CurrentLoadingReason = TEXT("World hasn't begun play yet");
 		return true;
@@ -183,6 +191,91 @@ bool UFrontendLoadingScreenSubsystem::CheckTheNeedToShowLoadingScreen()
 	}
 
 	// Check if the game states, player state, or character, actor component are ready
-	
+
 	return false;
+}
+
+void UFrontendLoadingScreenSubsystem::TryDisplayLoadingScreenIfNone()
+{
+	// If there's already active loading screen, return early if yes
+
+	if (CachedCreatedLoadingScreenWidget)
+	{
+		return;
+	}
+
+	const UFrontendLoadingScreenSettings* LoadingScreenSettings = GetDefault<UFrontendLoadingScreenSettings>();
+
+	TSubclassOf<UUserWidget> LoadedWidgetClass = LoadingScreenSettings->GetLoadingScreenWidgetClassChecked();
+
+	UUserWidget* CreatedWidget = UUserWidget::CreateWidgetInstance(*GetGameInstance(), LoadedWidgetClass, NAME_None);
+
+	check(CreatedWidget);
+
+	CachedCreatedLoadingScreenWidget = CreatedWidget->TakeWidget();
+
+	GetGameInstance()->GetGameViewportClient()->AddViewportWidgetContent(
+		CachedCreatedLoadingScreenWidget.ToSharedRef(),
+		1000
+	);
+
+	NotifyLoadingScreenVisibilityChanged(true);
+}
+
+void UFrontendLoadingScreenSubsystem::TryRemoveLoadingScreen()
+{
+	if (!CachedCreatedLoadingScreenWidget)
+	{
+		return;
+	}
+
+	GetGameInstance()->GetGameViewportClient()->RemoveViewportWidgetContent(
+		CachedCreatedLoadingScreenWidget.ToSharedRef());
+
+	CachedCreatedLoadingScreenWidget.Reset();
+
+	NotifyLoadingScreenVisibilityChanged(false);
+}
+
+void UFrontendLoadingScreenSubsystem::NotifyLoadingScreenVisibilityChanged(bool bIsVisible)
+{
+	for (ULocalPlayer* ExistingLocalPlayer : GetGameInstance()->GetLocalPlayers())
+	{
+		if (!ExistingLocalPlayer)
+		{
+			continue;
+		}
+
+		if (APlayerController* PC = ExistingLocalPlayer->GetPlayerController(GetGameInstance()->GetWorld()))
+		{
+			// Query if the player controller implements the interface. Call the function through interface to notify
+			// the loading status if yes.
+			if (PC->Implements<UFrontendLoadingScreenInterface>())
+			{
+				if (bIsVisible)
+				{
+					IFrontendLoadingScreenInterface::Execute_OnLoadingScreenActivated(PC);
+				}
+				else
+				{
+					IFrontendLoadingScreenInterface::Execute_OnLoadingScreenDeactivated(PC);
+				}
+			}
+
+			if (APawn* OwningPawn = PC->GetPawn())
+			{
+				if (OwningPawn->Implements<UFrontendLoadingScreenInterface>())
+				{
+					if (bIsVisible)
+					{
+						IFrontendLoadingScreenInterface::Execute_OnLoadingScreenActivated(OwningPawn);
+					}
+					else
+					{
+						IFrontendLoadingScreenInterface::Execute_OnLoadingScreenDeactivated(OwningPawn);
+					}
+				}
+			}
+		}
+	}
 }
