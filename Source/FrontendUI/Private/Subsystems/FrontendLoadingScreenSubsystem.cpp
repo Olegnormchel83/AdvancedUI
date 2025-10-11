@@ -3,7 +3,8 @@
 
 #include "Subsystems/FrontendLoadingScreenSubsystem.h"
 
-#include "FrontendDebugHelper.h"
+#include "PreLoadScreenManager.h"
+#include "FrontendSettings/FrontendLoadingScreenSettings.h"
 
 bool UFrontendLoadingScreenSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
@@ -14,7 +15,7 @@ bool UFrontendLoadingScreenSubsystem::ShouldCreateSubsystem(UObject* Outer) cons
 
 		return FoundClasses.IsEmpty();
 	}
-	
+
 	return false;
 }
 
@@ -36,13 +37,13 @@ UWorld* UFrontendLoadingScreenSubsystem::GetTickableGameObjectWorld() const
 	{
 		return OwningGameInstance->GetWorld();
 	}
-	
+
 	return nullptr;
 }
 
 void UFrontendLoadingScreenSubsystem::Tick(float DeltaTime)
 {
-	Debug::Print(TEXT("Ticking"));
+	TryUpdateLoadingScreen();
 }
 
 ETickableTickType UFrontendLoadingScreenSubsystem::GetTickableTickType() const
@@ -51,7 +52,7 @@ ETickableTickType UFrontendLoadingScreenSubsystem::GetTickableTickType() const
 	{
 		return ETickableTickType::Never;
 	}
-	
+
 	return ETickableTickType::Conditional;
 }
 
@@ -67,10 +68,121 @@ TStatId UFrontendLoadingScreenSubsystem::GetStatId() const
 
 void UFrontendLoadingScreenSubsystem::OnMapPreLoaded(const FWorldContext& WorldContext, const FString& MapName)
 {
-	
+	if (WorldContext.OwningGameInstance != GetGameInstance())
+	{
+		return;
+	}
+
+	SetTickableTickType(ETickableTickType::Conditional);
+
+	bIsCurrentlyLoadingMap = true;
+
+	TryUpdateLoadingScreen();
 }
 
 void UFrontendLoadingScreenSubsystem::OnMapPostLoaded(UWorld* LoadedWorld)
 {
+	if (LoadedWorld && LoadedWorld->GetGameInstance() == GetGameInstance())
+	{
+		bIsCurrentlyLoadingMap = false;
+	}
+}
+
+void UFrontendLoadingScreenSubsystem::TryUpdateLoadingScreen()
+{
+	if (IsPreLoadScreenActive())
+	{
+		return;
+	}
+
+	if (ShouldShowLoadingScreen())
+	{
+		OnLoadingReasonUpdated.Broadcast(CurrentLoadingReason);
+	}
+	else
+	{
+		SetTickableTickType(ETickableTickType::Never);
+	}
+}
+
+bool UFrontendLoadingScreenSubsystem::IsPreLoadScreenActive() const
+{
+	if (FPreLoadScreenManager* PreLoadScreenManager = FPreLoadScreenManager::Get())
+	{
+		return PreLoadScreenManager->HasValidActivePreLoadScreen();
+	}
+
+	return false;
+}
+
+bool UFrontendLoadingScreenSubsystem::ShouldShowLoadingScreen()
+{
+	const UFrontendLoadingScreenSettings* LoadingScreenSettings = GetDefault<UFrontendLoadingScreenSettings>();
+
+	if (GIsEditor() && !LoadingScreenSettings->bShouldLoadingScreenInEditor)
+	{
+		return false;
+	}
+
+	// Check if the objects in the world need a loading screen
+	if (CheckTheNeedToShowLoadingScreen())
+	{
+		GetGameInstance()->GetGameViewportClient()->bDisableWorldRendering = true;
+
+		return true;
+	}
+
+	CurrentLoadingReason = TEXT("Waiting for Texture Streaming");
 	
+	// There's no need to show the loading screen. Allow the world to be rendered to our viewport here
+	GetGameInstance()->GetGameViewportClient()->bDisableWorldRendering = false;
+
+	const float CurrentTime =  FPlatformTime::Seconds();
+
+	if (HoldLoadingScreenStartUpTime < 0.f)
+	{
+		HoldLoadingScreenStartUpTime = CurrentTime;
+	}
+
+	const float ElapsedTime = CurrentTime - HoldLoadingScreenStartUpTime;
+
+	if (ElapsedTime < LoadingScreenSettings->HoldLoadingScreenExtraSeconds)
+	{
+		return true;
+	}
+	
+	return false;
+}
+
+bool UFrontendLoadingScreenSubsystem::CheckTheNeedToShowLoadingScreen()
+{
+	if (bIsCurrentlyLoadingMap)
+	{
+		CurrentLoadingReason = TEXT("LoadingLevel");
+		return true;
+	}
+
+	UWorld* OwningWorld = GetGameInstance()->GetWorld();
+
+	if (!OwningWorld)
+	{
+		CurrentLoadingReason = TEXT("Initializing World");
+		return true;
+	}
+
+	if (OwningWorld->HasBegunPlay())
+	{
+		CurrentLoadingReason = TEXT("World hasn't begun play yet");
+		return true;
+	}
+
+	if (!OwningWorld->GetFirstPlayerController())
+	{
+		CurrentLoadingReason = TEXT("Player Controller is not valid yet");
+		return true;
+	}
+
+	// Check if the game states, player state, or character, actor component are ready
+	
+	return false;
 }

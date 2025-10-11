@@ -12,6 +12,11 @@ class FRONTENDUI_API UFrontendLoadingScreenSubsystem : public UGameInstanceSubsy
 	GENERATED_BODY()
 
 public:
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoadingReasonUpdatedDelegate, const FString&, CurrentLoadingReason);
+
+	UPROPERTY(BlueprintAssignable)
+	FOnLoadingReasonUpdatedDelegate OnLoadingReasonUpdated;
+	
 	//~ Begin USubsystem Interface
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const;
 	virtual void Initialize(FSubsystemCollectionBase& Collection);
@@ -32,4 +37,18 @@ private:
 
 	UFUNCTION()
 	void OnMapPostLoaded(UWorld* LoadedWorld);
+
+	void TryUpdateLoadingScreen();
+
+	bool IsPreLoadScreenActive() const;
+
+	bool ShouldShowLoadingScreen();
+
+	bool CheckTheNeedToShowLoadingScreen();
+
+	bool bIsCurrentlyLoadingMap = false;
+
+	float HoldLoadingScreenStartUpTime = -1.f;
+
+	FString CurrentLoadingReason;
 };
