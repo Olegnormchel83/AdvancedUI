@@ -109,6 +109,8 @@ void UFrontendLoadingScreenSubsystem::TryUpdateLoadingScreen()
 
 		HoldLoadingScreenStartUpTime = -1.f;
 
+		NotifyLoadingScreenVisibilityChanged(false);
+		
 		SetTickableTickType(ETickableTickType::Never);
 	}
 }
@@ -233,8 +235,6 @@ void UFrontendLoadingScreenSubsystem::TryRemoveLoadingScreen()
 		CachedCreatedLoadingScreenWidget.ToSharedRef());
 
 	CachedCreatedLoadingScreenWidget.Reset();
-
-	NotifyLoadingScreenVisibilityChanged(false);
 }
 
 void UFrontendLoadingScreenSubsystem::NotifyLoadingScreenVisibilityChanged(bool bIsVisible)
